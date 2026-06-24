@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR Візитівка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0b0e1a 0%, #1a1f35 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 50px 40px 45px;
+            max-width: 650px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+        .avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 44px;
+            font-weight: 700;
+            margin: 0 auto 20px;
+            color: #fff;
+            box-shadow: 0 8px 30px rgba(108, 92, 231, 0.4);
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            color: #a8b2d1;
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+        .student-id {
+            display: inline-block;
+            background: rgba(108, 92, 231, 0.20);
+            padding: 6px 20px;
+            border-radius: 40px;
+            font-size: 14px;
+            color: #c8d0f0;
+            border: 1px solid rgba(108, 92, 231, 0.25);
+            margin-bottom: 24px;
+        }
+        .divider {
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+            border-radius: 4px;
+            margin: 18px auto 28px;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            font-weight: 600;
+            font-size: 18px;
+            padding: 16px 44px;
+            border-radius: 60px;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 28px rgba(108, 92, 231, 0.35);
+        }
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 14px 40px rgba(108, 92, 231, 0.5);
+        }
+        .info-text {
+            margin-top: 26px;
+            font-size: 14px;
+            color: #7a85a8;
+            line-height: 1.6;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            color: #7a85a8;
+            margin-top: 6px;
+        }
+        .features {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .features .tag {
+            background: rgba(108, 92, 231, 0.15);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #a29bfe;
+            border: 1px solid rgba(108, 92, 231, 0.2);
+        }
+        .marker-preview {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 16px 0;
+        }
+        .marker-preview img {
+            width: 120px;
+            height: 75px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            object-fit: cover;
+        }
+        .marker-preview .label {
+            font-size: 11px;
+            color: #7a85a8;
+            display: block;
+            text-align: center;
+            margin-top: 4px;
+        }
+        @media (max-width: 500px) {
+            .card {
+                padding: 32px 20px 30px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .btn {
+                font-size: 16px;
+                padding: 14px 32px;
+            }
+            .marker-preview img {
+                width: 80px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="avatar">ВС</div>
+        <h1>Вероніка Степанова</h1>
+        <p class="subtitle">Група: КН-41</p>
+        <span class="student-id">№ залікової книжки: 123456</span>
+
+        <div class="divider"></div>
+
+        <div class="marker-preview">
+            <div>
+                <img src="business-card.png" alt="Візитівка" />
+                <span class="label">📇 Візитівка</span>
+            </div>
+        </div>
+
+        <a href="scene.html" class="btn">🚀 Запустити AR-візитівку</a>
+
+        <div class="features">
+            <span class="tag">📇 Візитівка</span>
+            <span class="tag">🎨 3D-аватар</span>
+            <span class="tag">🎬 Відео</span>
+            <span class="tag">🔊 Аудіо</span>
+            <span class="tag">🔄 Анімація</span>
+            <span class="tag">👆 Інтерактивність</span>
+            <span class="tag">📸 Screenshot</span>
+            <span class="tag">📤 Web Share API</span>
+        </div>
+
+        <p class="info-text">
+            <strong>Інтерактивна AR-візитівка</strong><br />
+            <span class="badge">📐 Доповнена реальність у браузері</span>
+        </p>
+    </div>
+</body>
+</html>

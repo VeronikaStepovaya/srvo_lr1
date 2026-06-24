@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AR Візитівка</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0b0e1a;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            width: 100vw;
+            height: 100vh;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        #container video,
+        #container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+        #container canvas {
+            z-index: 2;
+            pointer-events: none;
+        }
+        #container video {
+            z-index: 1;
+        }
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 20;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 14px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+        .back-btn:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        .btn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.4);
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateX(-50%) scale(1.05);
+        }
+        .btn.hidden {
+            display: none;
+        }
+        #status {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 90%;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Стилі для CSS-контенту */
+        #ar-div {
+            visibility: hidden;
+            width: 1000px;
+            height: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 48px;
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            border: 2px solid rgba(108, 92, 231, 0.3);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #ar-div .info {
+            font-size: 24px;
+            color: #a8b2d1;
+            margin-top: 10px;
+        }
+        #ar-div .highlight {
+            color: #a29bfe;
+            font-weight: bold;
+        }
+        #ar-div .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 32px;
+            cursor: pointer;
+            color: #ff4757;
+            background: none;
+            border: none;
+        }
+
+        #preview {
+            position: fixed;
+            z-index: 30;
+            left: 10%;
+            top: 10%;
+            width: 80%;
+            height: 80%;
+            border: solid 10px white;
+            visibility: hidden;
+            background: #000;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+        }
+        #preview-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        #preview-close {
+            position: absolute;
+            right: -15px;
+            top: -15px;
+            font-size: 28px;
+            padding: 8px 16px;
+            cursor: pointer;
+            color: white;
+            background: #ff4757;
+            border-radius: 50%;
+            border: 3px solid white;
+            font-weight: bold;
+            line-height: 1;
+        }
+        #preview-share {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 20px;
+            padding: 12px 40px;
+            border-radius: 30px;
+            border: none;
+            background: #6c5ce7;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #preview-share:hover {
+            transform: translateX(-50%) scale(1.05);
+            background: #5a4bd1;
+        }
+
+        /* Кнопка захоплення */
+        #capture {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            height: 60px;
+            width: 60px;
+            border: solid 3px white;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #capture:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-50%) scale(1.05);
+        }
+        #capture.hidden {
+            display: none;
+        }
+        #capture::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+        }
+        #capture::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 600px) {
+            #status {
+                font-size: 12px;
+                bottom: 150px;
+                padding: 6px 16px;
+            }
+            .btn {
+                padding: 10px 24px;
+                font-size: 14px;
+                bottom: 20px;
+            }
+            #capture {
+                bottom: 70px;
+                height: 50px;
+                width: 50px;
+            }
+            #capture::after {
+                width: 32px;
+                height: 32px;
+            }
+            #preview {
+                left: 5%;
+                top: 5%;
+                width: 90%;
+                height: 90%;
+            }
+            #ar-div {
+                font-size: 28px;
+                padding: 20px;
+            }
+            #ar-div .info {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">← Назад</a>
+
+    <div id="status">⏳ Завантаження...</div>
+    <button class="btn" id="startBtn">📷 Запустити камеру</button>
+    <button id="capture" class="hidden"></button>
+
+    <div id="container"></div>
+
+    <!-- CSS контейнер для додаткової інформації -->
+    <div id="ar-div">
+        <div>
+            <div style="font-size:64px;">👋</div>
+            <div style="font-size:48px;margin-top:10px;">Вітаю!</div>
+            <div class="info" style="font-size:28px;margin-top:10px;">
+                Я <span class="highlight">Вероніка Степанова</span>
+            </div>
+            <div class="info">
+                WebAR Developer & Designer
+            </div>
+            <div class="info" style="font-size:20px;margin-top:20px;color:#7a85a8;">
+                📧 veronika@example.com<br>
+                🌐 veronikastepovaya.github.io
+            </div>
+            <button class="close-btn" id="closeInfoBtn">✕</button>
+        </div>
+    </div>
+
+    <!-- Попередній перегляд фото -->
+    <div id="preview">
+        <div id="preview-close">✕</div>
+        <img id="preview-image" />
+        <button id="preview-share">📤 Поділитись</button>
+    </div>
+
+    <!-- MindAR -->
+    <script src="https://unpkg.com/mind-ar@1.1.5/dist/mindar-image-three.prod.js">
+    </script>
+
+    <!-- Карта імпорту для Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "GLTFLoader": "https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js",
+                "CSS3DRenderer": "https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS3DRenderer.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'GLTFLoader';
+        import { CSS3DObject } from 'CSS3DRenderer';
+
+        // --- Отримання елементів ---
+        const container = document.getElementById('container');
+        const status = document.getElementById('status');
+        const startBtn = document.getElementById('startBtn');
+        const captureBtn = document.getElementById('capture');
+        const preview = document.getElementById('preview');
+        const previewImage = document.getElementById('preview-image');
+        const previewClose = document.getElementById('preview-close');
+        const previewShare = document.getElementById('preview-share');
+        const arDiv = document.getElementById('ar-div');
+        const closeInfoBtn = document.getElementById('closeInfoBtn');
+
+        let started = false;
+        let mindarThree = null;
+        let videoObj = null;
+        let audioObj = null;
+
+        // --- Завантажувачі ---
+        function waitForMindAR(callback, attempts = 0) {
+            if (window.MINDAR && window.MINDAR.IMAGE) {
+                console.log('✅ MindAR завантажено');
+                callback();
+                return;
+            }
+            if (attempts > 30) {
+                status.textContent = '❌ Помилка завантаження MindAR';
+                return;
+            }
+            setTimeout(() => waitForMindAR(callback, attempts + 1), 200);
+        }
+
+        // --- Функція захоплення кадру ---
+        const capture = (mindar) => {
+            const { video, renderer, scene, camera } = mindar;
+            const renderCanvas = renderer.domElement;
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = renderCanvas.width;
+            canvas.height = renderCanvas.height;
+
+            // Копіювання відео
+            const sx = (video.clientWidth - renderCanvas.clientWidth) / 2 *
+                video.videoWidth / video.clientWidth;
+            const sy = (video.clientHeight - renderCanvas.clientHeight) / 2 *
+                video.videoHeight / video.clientHeight;
+            const sw = video.videoWidth - sx * 2;
+            const sh = video.videoHeight - sy * 2;
+
+            context.drawImage(video, sx, sy, sw, sh,
+                0, 0, canvas.width, canvas.height);
+
+            // Копіювання 3D-рендера
+            renderer.preserveDrawingBuffer = true;
+            renderer.render(scene, camera);
+            context.drawImage(renderCanvas, 0, 0, canvas.width, canvas.height);
+            renderer.preserveDrawingBuffer = false;
+
+            // Додавання водяного знака
+            context.font = 'bold 16px Arial';
+            context.fillStyle = 'rgba(255,255,255,0.5)';
+            context.textAlign = 'right';
+            context.textBaseline = 'bottom';
+            context.fillText('AR Business Card © 2024', canvas.width - 20, canvas.height - 20);
+
+            return canvas.toDataURL('image/png');
+        };
+
+        // --- Основна функція ---
+        function startAR() {
+            try {
+                // ============================================================
+                // СТВОРЕННЯ AR-РУШІЯ
+                // ============================================================
+                mindarThree = new window.MINDAR.IMAGE.MindARThree({
+                    container: container,
+                    imageTargetSrc: 'business-card.mind',
+                    maxTrack: 1,
+                });
+
+                const { renderer, scene, camera, cssRenderer, cssScene } = mindarThree;
+
+                // ============================================================
+                // ОСВІТЛЕННЯ
+                // ============================================================
+                const light1 = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+                scene.add(light1);
+
+                const light2 = new THREE.DirectionalLight(0xffffff, 0.8);
+                light2.position.set(1, 2, 2);
+                scene.add(light2);
+
+                const light3 = new THREE.DirectionalLight(0xa29bfe, 0.4);
+                light3.position.set(-1, 1, 1);
+                scene.add(light3);
+
+                // ============================================================
+                // ЗАВАНТАЖУВАЧІ
+                // ============================================================
+                const loader = new THREE.TextureLoader();
+                const gltfLoader = new GLTFLoader();
+
+                // ============================================================
+                // ЯКІР ДЛЯ ВІЗИТІВКИ
+                // ============================================================
+                const anchor = mindarThree.addAnchor(0);
+
+                // ============================================================
+                // 1. ОСНОВНА ПЛОЩИНА (візитівка)
+                // ============================================================
+                const cardTexture = loader.load('business-card.png');
+                const cardGeo = new THREE.PlaneGeometry(1, 0.625);
+                const cardMat = new THREE.MeshBasicMaterial({
+                    map: cardTexture,
+                    transparent: true,
+                    opacity: 0.95,
+                });
+                const card = new THREE.Mesh(cardGeo, cardMat);
+                card.position.z = -0.01;
+                anchor.group.add(card);
+
+                // ============================================================
+                // 2. 3D-АВАТАР (модель або геометрія)
+                // ============================================================
+                // Сфера з текстурою аватара
+                const avatarTexture = loader.load('avatar.jpg');
+                const sphereGeo = new THREE.SphereGeometry(0.12, 32, 32);
+                const sphereMat = new THREE.MeshBasicMaterial({
+                    map: avatarTexture,
+                });
+                const avatar = new THREE.Mesh(sphereGeo, sphereMat);
+                avatar.position.set(-0.35, 0.15, 0.02);
+                avatar.userData.clickable = true;
+                avatar.userData.type = 'avatar';
+                anchor.group.add(avatar);
+
+                // Кільце навколо аватара
+                const ringGeo = new THREE.TorusGeometry(0.13, 0.015, 16, 32);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: 0x6c5ce7,
+                    transparent: true,
+                    opacity: 0.6,
+                });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.position.copy(avatar.position);
+                ring.position.z += 0.01;
+                anchor.group.add(ring);
+
+                // ============================================================
+                // 3. ІКОНКИ ДЛЯ КОНТАКТІВ (інтерактивні)
+                // ============================================================
+                const iconGeo = new THREE.CircleGeometry(0.045, 32);
+
+                // Дані для іконок
+                const iconsData = [{
+                    id: 'email',
+                    label: '📧',
+                    x: -0.38,
+                    y: -0.22,
+                    action: () => {
+                        showInfo('📧 Email: veronika@example.com', 3000);
+                    }
+                }, {
+                    id: 'web',
+                    label: '🌐',
+                    x: -0.22,
+                    y: -0.22,
+                    action: () => {
+                        window.open('https://veronikastepovaya.github.io', '_blank');
+                    }
+                }, {
+                    id: 'linkedin',
+                    label: '💼',
+                    x: -0.06,
+                    y: -0.22,
+                    action: () => {
+                        window.open('https://linkedin.com/in/veronika', '_blank');
+                    }
+                }, {
+                    id: 'github',
+                    label: '🐙',
+                    x: 0.10,
+                    y: -0.22,
+                    action: () => {
+                        window.open('https://github.com/veronikastepovaya', '_blank');
+                    }
+                }, {
+                    id: 'phone',
+                    label: '📱',
+                    x: 0.26,
+                    y: -0.22,
+                    action: () => {
+                        showInfo('📱 Телефон: +38 (066) 123-45-67', 3000);
+                    }
+                }, {
+                    id: 'location',
+                    label: '📍',
+                    x: 0.42,
+                    y: -0.22,
+                    action: () => {
+                        showInfo('📍 Кривий Ріг, Україна', 3000);
+                    }
+                }];
+
+                const icons = [];
+
+                iconsData.forEach((data) => {
+                    // Створення текстури з емодзі
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64;
+                    canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#6c5ce7';
+                    ctx.beginPath();
+                    ctx.arc(32, 32, 28, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '32px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(data.label, 32, 34);
+
+                    const texture = new THREE.CanvasTexture(canvas);
+                    const mat = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        transparent: true,
+                    });
+                    const mesh = new THREE.Mesh(iconGeo, mat);
+                    mesh.position.set(data.x, data.y, 0.02);
+                    mesh.userData.clickable = true;
+                    mesh.userData.type = data.id;
+                    mesh.userData.action = data.action;
+                    anchor.group.add(mesh);
+                    icons.push(mesh);
+                });
+
+                // ============================================================
+                // 4. CSS3D КОНТЕНТ (додаткова інформація)
+                // ============================================================
+                const infoDiv = document.getElementById('ar-div');
+                const cssObj = new CSS3DObject(infoDiv);
+                cssObj.position.set(0, 0.25, 0.5);
+                cssObj.scale.set(1.2, 1.2, 1.2);
+                infoDiv.style.visibility = 'visible';
+                infoDiv.style.visibility = 'hidden'; // приховуємо спочатку
+
+                const cssAnchor = mindarThree.addCSSAnchor(0);
+                cssAnchor.group.add(cssObj);
+
+                // Показ інформації
+                function showInfo(text, duration = 2000) {
+                    infoDiv.style.visibility = 'visible';
+                    const textEl = infoDiv.querySelector('div');
+                    if (textEl) {
+                        textEl.innerHTML = text;
+                    }
+                    if (duration > 0) {
+                        setTimeout(() => {
+                            infoDiv.style.visibility = 'hidden';
+                        }, duration);
+                    }
+                }
+
+                // Кнопка закриття інформації
+                closeInfoBtn.addEventListener('click', () => {
+                    infoDiv.style.visibility = 'hidden';
+                });
+
+                // ============================================================
+                // 5. ВІДЕО (на площині)
+                // ============================================================
+                const videoEl = document.createElement('video');
+                videoEl.src = 'https://pixabay.com/videos/download/video-348656_medium.mp4';
+                videoEl.loop = true;
+                videoEl.muted = true;
+                videoEl.playsInline = true;
+
+                const videoTexture = new THREE.VideoTexture(videoEl);
+                const videoGeo = new THREE.PlaneGeometry(0.2, 0.1125);
+                const videoMat = new THREE.MeshBasicMaterial({
+                    map: videoTexture,
+                    transparent: true,
+                    opacity: 0,
+                });
+                const videoMesh = new THREE.Mesh(videoGeo, videoMat);
+                videoMesh.position.set(0, 0.15, 0.02);
+                videoMesh.userData.clickable = true;
+                videoMesh.userData.type = 'video';
+                anchor.group.add(videoMesh);
+
+                // ============================================================
+                // 6. АУДІО (просторове)
+                // ============================================================
+                const listener = new THREE.AudioListener();
+                camera.add(listener);
+
+                const audioLoader = new THREE.AudioLoader();
+                const audio = new THREE.PositionalAudio(listener);
+
+                // Завантажуємо аудіо (короткий звук)
+                const audioUrl = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+                audioLoader.load(audioUrl, (buffer) => {
+                    audio.setBuffer(buffer);
+                    audio.setLoop(true);
+                    audio.setVolume(0.3);
+                    audio.setRefDistance(20);
+                    anchor.group.add(audio);
+                    console.log('✅ Аудіо завантажено');
+                });
+
+                // ============================================================
+                // 7. ДОДАТКОВІ ДЕКОРАТИВНІ ЕЛЕМЕНТИ
+                // ============================================================
+
+                // Партиклі (зірки) навколо візитівки
+                const particleCount = 50;
+                const particleGeo = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount * 3; i++) {
+                    positions[i] = (Math.random() - 0.5) * 1.6;
+                }
+                particleGeo.setAttribute('position',
+                    new THREE.BufferAttribute(positions, 3));
+                const particleMat = new THREE.PointsMaterial({
+                    color: 0xa29bfe,
+                    size: 0.008,
+                    transparent: true,
+                    opacity: 0.6,
+                });
+                const particles = new THREE.Points(particleGeo, particleMat);
+                particles.position.z = -0.3;
+                anchor.group.add(particles);
+
+                // ============================================================
+                // 8. ВЗАЄМОДІЯ З КОРИСТУВАЧЕМ (Raycaster)
+                // ============================================================
+                document.body.addEventListener('click', (e) => {
+                    const mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                    const mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+                    const mouse = new THREE.Vector2(mouseX, mouseY);
+
+                    const raycaster = new THREE.Raycaster();
+                    raycaster.setFromCamera(mouse, camera);
+
+                    const intersects = raycaster.intersectObjects(
+                        scene.children, true);
+
+                    if (intersects.length > 0) {
+                        let o = intersects[0].object;
+                        while (o.parent && !o.userData.clickable) {
+                            o = o.parent;
+                        }
+                        if (o.userData.clickable) {
+                            // Відео
+                            if (o.userData.type === 'video') {
+                                if (videoEl.paused) {
+                                    videoEl.play();
+                                    videoMat.opacity = 1;
+                                    status.textContent = '🎬 Відео відтворюється';
+                                    status.style.color = '#2ed573';
+                                } else {
+                                    videoEl.pause();
+                                    videoMat.opacity = 0.3;
+                                    status.textContent = '⏸️ Відео призупинено';
+                                    status.style.color = '#feca57';
+                                }
+                                return;
+                            }
+
+                            // Аватар
+                            if (o.userData.type === 'avatar') {
+                                if (audio.isPlaying) {
+                                    audio.pause();
+                                    status.textContent = '🔇 Аудіо вимкнено';
+                                    status.style.color = '#ff4757';
+                                } else {
+                                    audio.play();
+                                    status.textContent = '🔊 Аудіо ввімкнено';
+                                    status.style.color = '#2ed573';
+                                }
+                                return;
+                            }
+
+                            // Іконки - виконуємо дію
+                            if (o.userData.action) {
+                                o.userData.action();
+                            }
+                        }
+                    }
+                });
+
+                // ============================================================
+                // 9. ЗАХОПЛЕННЯ КАДРІВ
+                // ============================================================
+                captureBtn.addEventListener('click', () => {
+                    const data = capture(mindarThree);
+                    preview.style.visibility = 'visible';
+                    previewImage.src = data;
+                });
+
+                previewClose.addEventListener('click', () => {
+                    preview.style.visibility = 'hidden';
+                });
+
+                previewShare.addEventListener('click', () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = previewImage.naturalWidth || 800;
+                    canvas.height = previewImage.naturalHeight || 600;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(previewImage, 0, 0, canvas.width, canvas.height);
+
+                    canvas.toBlob((blob) => {
+                        const file = new File([blob], 'ar-business-card.png', {
+                            type: 'image/png'
+                        });
+                        const files = [file];
+                        if (navigator.canShare && navigator.canShare({ files })) {
+                            navigator.share({
+                                files: files,
+                                title: 'AR Business Card',
+                                text: 'Подивіться на мою AR візитівку!'
+                            }).catch(() => {});
+                        } else {
+                            const link = document.createElement('a');
+                            link.download = 'ar-business-card.png';
+                            link.href = previewImage.src;
+                            link.click();
+                        }
+                    });
+                });
+
+                // ============================================================
+                // 10. ЗАПУСК КАМЕРИ
+                // ============================================================
+                startBtn.addEventListener('click', async () => {
+                    if (started) return;
+                    startBtn.classList.add('hidden');
+                    status.textContent = '📷 Запуск камери...';
+
+                    try {
+                        // Перевірка доступу до камери
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                            video: {
+                                facingMode: 'environment',
+                                width: { ideal: 640 },
+                                height: { ideal: 480 }
+                            }
+                        });
+                        stream.getTracks().forEach(t => t.stop());
+
+                        await mindarThree.start();
+                        started = true;
+                        captureBtn.classList.remove('hidden');
+                        status.textContent = '✅ Знайдіть візитівку 🔍';
+                        status.style.color = '#2ed573';
+
+                        // Автозапуск відео при виявленні маркера
+                        anchor.onTargetFound = () => {
+                            status.textContent = '🎯 Візитівка знайдена!';
+                            status.style.color = '#2ed573';
+                            // Показуємо відео з анімацією
+                            videoMat.opacity = 0.7;
+                        };
+                        anchor.onTargetLost = () => {
+                            status.textContent = '👀 Шукаю візитівку...';
+                            status.style.color = '#feca57';
+                            videoMat.opacity = 0.1;
+                            videoEl.pause();
+                        };
+
+                    } catch (err) {
+                        status.textContent = '❌ Помилка: ' + err.message;
+                        status.style.color = '#ff4757';
+                        startBtn.classList.remove('hidden');
+                        console.error(err);
+                    }
+                });
+
+                // ============================================================
+                // 11. АНІМАЦІЯ
+                // ============================================================
+                const clock = new THREE.Clock();
+
+                renderer.setAnimationLoop(() => {
+                    const delta = clock.getDelta();
+                    const time = clock.getElapsedTime();
+
+                    // Анімація аватара (обертання + підстрибування)
+                    avatar.rotation.y += delta * 0.5;
+                    avatar.position.y = 0.15 + Math.sin(time * 0.8) * 0.015;
+
+                    // Кільце навколо аватара
+                    ring.position.y = avatar.position.y;
+                    ring.rotation.z += delta * 0.5;
+
+                    // Анімація іконок (пульсація)
+                    icons.forEach((icon, i) => {
+                        const s = 1 + 0.1 * Math.sin(time * 2 + i * 0.8);
+                        icon.scale.set(s, s, s);
+                    });
+
+                    // Анімація партиклів
+                    particles.rotation.y += delta * 0.1;
+                    particles.rotation.x = Math.sin(time * 0.05) * 0.02;
+
+                    // Автоматичне обертання відео-площини (якщо видима)
+                    if (videoMat.opacity > 0.1) {
+                        videoMesh.rotation.z = Math.sin(time * 0.3) * 0.05;
+                    }
+
+                    // Анімація візитівки (легке дихання)
+                    const breath = 1 + Math.sin(time * 0.3) * 0.002;
+                    card.scale.set(breath, breath, 1);
+
+                    renderer.render(scene, camera);
+                    if (cssRenderer) {
+                        cssRenderer.render(cssScene, camera);
+                    }
+                });
+
+                status.textContent = '🖱️ Натисніть кнопку';
+                startBtn.classList.remove('hidden');
+
+                // Автозапуск через 2 секунди
+                setTimeout(() => {
+                    if (!started) {
+                        startBtn.click();
+                    }
+                }, 2000);
+
+            } catch (err) {
+                status.textContent = '❌ ' + err.message;
+                status.style.color = '#ff4757';
+                console.error(err);
+            }
+        }
+
+        // --- ЗАПУСК ---
+        waitForMindAR(startAR);
+    </script>
+</body>
+</html>
